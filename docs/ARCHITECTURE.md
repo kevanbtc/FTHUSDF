@@ -208,3 +208,124 @@ These invariants are enforced via:
 - Test suites (`tests/infra`, `tests/compliance`, `tests/contracts`)
 
 See `docs/STABLECOIN-POR-POLICY.md` and `docs/KYC-AML-POLICY-US.md` for further detail.
+
+---
+
+## 7. C4 Model Views
+
+### 7.1 System Context
+
+```mermaid
+C4Context
+  title System Context - FTH XRPL Backbone
+
+  Person(customer, "Customer", "KYC'd member")
+  Person(treasury_ops, "Treasury Ops", "FTH staff")
+  Person(compliance, "Compliance Officer", "KYC/AML approval")
+  
+  System(fth_backbone, "FTH XRPL Backbone", "Digital settlement infrastructure")
+  
+  System_Ext(us_banks, "US Banks", "Reserve custody")
+  System_Ext(kyc_provider, "KYC Provider", "Sumsub/Onfido")
+  System_Ext(sanctions_api, "Sanctions Lists", "OFAC/UN/EU")
+  System_Ext(xrpl_network, "XRPL Mainnet", "Public ledger")
+  
+  Rel(customer, fth_backbone, "Requests FTHUSD/USDF", "HTTPS/WS")
+  Rel(treasury_ops, fth_backbone, "Manages reserves, mints", "Admin UI")
+  Rel(compliance, fth_backbone, "Approves/blocks customers", "Admin UI")
+  
+  Rel(fth_backbone, us_banks, "Reads balances, initiates payouts", "API/CSV")
+  Rel(fth_backbone, kyc_provider, "Verifies identity", "API")
+  Rel(fth_backbone, sanctions_api, "Screens wallets", "API")
+  Rel(fth_backbone, xrpl_network, "Issues IOUs, queries ledger", "WebSocket/JSON-RPC")
+```
+
+### 7.2 Container View
+
+```mermaid
+C4Container
+  title Container Diagram - FTH XRPL Backbone
+
+  Container_Boundary(xrpl_fleet, "XRPL Node Fleet") {
+    Container(core_node, "Core Node", "rippled", "Analytics, routing")
+    Container(treasury_node, "Treasury Node", "rippled", "Mint/burn rail")
+    Container(member_node, "Member API Node", "rippled", "Public queries")
+  }
+  
+  Container_Boundary(services, "Service Layer") {
+    Container(xrpl_api, "xrpl-core-api", "Node.js", "Node routing")
+    Container(compliance_svc, "compliance-service", "Node.js", "KYC/sanctions")
+    Container(membership_svc, "membership-service", "Node.js", "NFT issuance")
+    Container(treasury_svc, "treasury-service", "Node.js", "Mint orchestration")
+    Container(bank_gw, "bank-gateway", "Node.js", "Reserve updates")
+  }
+  
+  Container_Boundary(evm, "EVM Control Plane") {
+    Container(system_guard, "SystemGuard", "Solidity", "Pause/unpause")
+    Container(mint_guard, "MintGuard", "Solidity", "Supply caps")
+    Container(reserve_reg, "ReserveRegistry", "Solidity", "Bank balances")
+    Container(compliance_reg, "ComplianceRegistry", "Solidity", "Whitelist")
+  }
+  
+  ContainerDb(postgres, "PostgreSQL", "Service state, customers, transactions")
+  
+  Rel(xrpl_api, core_node, "Routes operations")
+  Rel(xrpl_api, treasury_node, "Mint/burn")
+  Rel(xrpl_api, member_node, "Public reads")
+  
+  Rel(compliance_svc, compliance_reg, "Writes whitelist")
+  Rel(treasury_svc, mint_guard, "Checks canMint")
+  Rel(treasury_svc, system_guard, "Checks isPaused")
+  Rel(bank_gw, reserve_reg, "Updates reserves")
+  
+  Rel(treasury_svc, xrpl_api, "Submits txs")
+  Rel(compliance_svc, postgres, "Stores KYC records")
+  Rel(membership_svc, postgres, "Stores wallet registry")
+```
+
+### 7.3 Deployment View
+
+#### Production (AWS US-East-1)
+
+- **XRPL Nodes**: 3× EC2 instances (t3.xlarge)
+  - Core: Internal VPC
+  - Treasury: VPN-only access
+  - Member API: Public ALB + WAF
+- **Services**: ECS Fargate containers
+- **EVM Contracts**: Deployed on Ethereum mainnet (or L2)
+- **Database**: RDS PostgreSQL (Multi-AZ)
+- **Secrets**: AWS Secrets Manager
+- **Monitoring**: CloudWatch + custom dashboards
+
+#### Disaster Recovery
+
+- Treasury node: Hot standby in US-West-2
+- Database: Cross-region replication
+- Issuer keys: Geographically distributed HSM/MPC
+- RPO: < 5 minutes
+- RTO: < 15 minutes
+
+---
+
+## 8. Technology Stack
+
+| Layer | Technologies |
+|-------|-------------|
+| **Ledger** | XRPL (rippled 1.12+) |
+| **Smart Contracts** | Solidity 0.8.20, Hardhat, OpenZeppelin |
+| **Services** | Node.js 20+, TypeScript 5.x, Express |
+| **XRPL Client** | xrpl.js 3.0+ |
+| **EVM Client** | ethers.js 6.x |
+| **Database** | PostgreSQL 15+ |
+| **Testing** | Mocha, Chai, Hardhat |
+| **CI/CD** | GitHub Actions |
+| **Infrastructure** | AWS (EC2, ECS, RDS, ALB) |
+
+---
+
+## 9. References
+
+- [XRPL Documentation](https://xrpl.org/docs.html)
+- [OpenZeppelin Contracts](https://docs.openzeppelin.com/contracts/)
+- [C4 Model](https://c4model.com/)
+- Internal docs: `docs/SUMMARY.md`

@@ -1,7 +1,26 @@
 {
   "name": "fth-xrpl-backbone",
   "version": "0.1.0",
-  "description": "FTH XRPL Backbone - FTHUSD/USDF Infrastructure",
+  "description": "Enterprise digital settlement infrastructure combining XRPL instant finality with EVM control plane guardrails for FTHUSD/USDF stablecoins",
+  "keywords": [
+    "xrpl",
+    "stablecoin",
+    "settlement",
+    "fintech",
+    "evm",
+    "solidity",
+    "compliance",
+    "proof-of-reserves"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kevanbtc/FTHUSDF.git"
+  },
+  "homepage": "https://github.com/kevanbtc/FTHUSDF#readme",
+  "bugs": {
+    "url": "https://github.com/kevanbtc/FTHUSDF/issues"
+  },
+  "author": "FutureTech Holding Company",
   "private": true,
   "scripts": {
   "test": "pnpm test:contracts && pnpm test:infra && pnpm test:compliance",
