@@ -1,3 +1,11 @@
+# FTH XRPL Backbone — FTHUSD / USDF Infrastructure
+
+![ci](https://github.com/kevanbtc/FTHUSDF/actions/workflows/ci.yml/badge.svg?branch=main) ![xrpl](https://img.shields.io/badge/ledger-XRPL-3467eb) ![solidity](https://img.shields.io/badge/solidity-0.8.20-363636) ![typescript](https://img.shields.io/badge/typescript-5.x-2f74c0) ![license](https://img.shields.io/badge/license-MIT-blue)
+
+For the professional, senior-grade README with diagrams and quick links, see `docs/README-HQ.md`.
+
+---
+
 # FTHUSDF Project
 
 Welcome to the FTHUSDF project! Here you’ll find everything you need to know about the project, its features, and how to get started! 🚀

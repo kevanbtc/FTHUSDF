@@ -983,13 +983,19 @@ You've built the nervous system. The rest is just muscles and armor.
 **Last Updated:** November 17, 2025  
 **Status:** Operational Blueprint – Ready for Implementation
 
-## External‑Facing Documents (New)
+## Externalâ€‘Facing Documents (New)
 
 - WHITEPAPER: `WHITEPAPER-FTH-DIGITAL-FINANCE.md`
 - Executive Summary: `EXECUTIVE-SUMMARY.md`
 - India Strategy & Compliance: `INDIA-STRATEGY-AND-COMPLIANCE.md`
-- CBDC Interoperability: `CBDC-INTEROPERABILITY.md`
-- Global Roll‑Out Playbook: `GLOBAL-ROLL-OUT-PLAYBOOK.md`
+   - CBDC Interoperability: `CBDC-INTEROPERABILITY.md`
+- Global Rollâ€‘Out Playbook: `GLOBAL-ROLL-OUT-PLAYBOOK.md`
 - FAQ: `FAQ.md`
-- One‑Pager: `ONE-PAGER.md`
+- Oneâ€‘Pager: `ONE-PAGER.md`
 - HQ README (engineering + marketing): `README-HQ.md`
+
+## Additional Engineering Docs (New)
+
+- Threat Model (STRIDE): `docs/THREAT-MODEL.md`
+- Service API Overview: `docs/API/overview.md`
+- Operational Runbooks: `docs/RUNBOOKS/operational-runbooks.md`
