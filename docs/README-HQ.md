@@ -1,4 +1,4 @@
-# FTHUSDF – HQ README (Engineering + Marketing)
+# FTHUSDF – HQ README (Engineering + Marketing) 🚀
 
 ![status](https://img.shields.io/badge/status-active-brightgreen)
 ![xrpl](https://img.shields.io/badge/ledger-XRPL-3467eb)
@@ -10,7 +10,7 @@ A production-grade settlement backbone on XRP Ledger with EVM guardrails. It pow
 
 ---
 
-## Table of Contents
+## Table of Contents 📚
 
 - Overview
 - Architecture at a Glance
@@ -25,7 +25,7 @@ A production-grade settlement backbone on XRP Ledger with EVM guardrails. It pow
 
 ---
 
-## Overview
+## Overview 🔭
 
 - Three sovereign XRPL nodes with role isolation (core, treasury, member_api)
 - EVM control plane for pause, caps, reserves, and whitelisting
@@ -34,7 +34,7 @@ A production-grade settlement backbone on XRP Ledger with EVM guardrails. It pow
 
 ---
 
-## Architecture at a Glance
+## Architecture at a Glance 🧩
 
 ```mermaid
 flowchart TB
@@ -75,11 +75,13 @@ flowchart TB
 
 Color key: control plane = dark; services = blue; XRPL nodes = indigo; banks = gray.
 
+Legend: 🛡️ Guarded | 🧰 Service | 🧭 Routing | 🏦 Bank | 🔒 Compliance | 🧱 Node Role
+
 ---
 
-## Diagrams (Mermaid)
+## Diagrams (Mermaid) 🎨
 
-### Mint/Burn Flow
+### Mint/Burn Flow 🔁
 
 ```mermaid
 sequenceDiagram
@@ -98,7 +100,7 @@ sequenceDiagram
   note over T,MINT: On burn: recordBurn(txHash)
 ```
 
-### KYC Onboarding Flow
+### KYC Onboarding Flow ✅
 
 ```mermaid
 flowchart LR
@@ -109,7 +111,7 @@ flowchart LR
   B -->|Denied/Review| F[Manual Review]
 ```
 
-### CBDC Gateway (Two-Phase Commit)
+### CBDC Gateway (Two-Phase Commit) 🪙
 
 ```mermaid
 flowchart TB
@@ -128,7 +130,7 @@ flowchart TB
 
 ---
 
-## Services Overview (Senior Engineering)
+## Services Overview (Senior Engineering) 🧰
 
 | Service | Purpose | Key Endpoints/Files |
 |---|---|---|
@@ -140,7 +142,7 @@ flowchart TB
 
 ---
 
-## Smart Contracts (Control Plane)
+## Smart Contracts (Control Plane) 🛡️
 
 | Contract | Summary | Critical Methods |
 |---|---|---|
@@ -157,7 +159,7 @@ Invariants:
 
 ---
 
-## Invariants & Security
+## Invariants & Security 🔒
 
 - Separation of duties: guardians (pause), treasury (mint/burn), compliance (whitelist)
 - Keys: issuer (HSM/MPC cold), treasury (warm), services (scoped)
@@ -166,7 +168,7 @@ Invariants:
 
 ---
 
-## Developer Guide (Sr/Dev Level)
+## Developer Guide (Sr/Dev Level) 🧑‍💻
 
 Prereqs: Node 18+, pnpm, Git, OpenSSL; Solidity 0.8.20 toolchain; XRPL and ethers libraries.
 
@@ -192,7 +194,7 @@ pnpm test
 
 ---
 
-## Marketing Overview (High Level)
+## Marketing Overview (High Level) 📣
 
 - Instant settlement with machine-verifiable guardrails
 - Lower counterparty/operational risk; better transparency
@@ -201,14 +203,14 @@ pnpm test
 
 ---
 
-## India Strategy & CBDC Interop
+## India Strategy & CBDC Interop 🌐🇮🇳
 
 - India: bank/PPI partner-first; UPI/BBPS payouts; CKYC/AA alignment; local Mumbai node; data residency
 - CBDC gateway: two-phase commit, audit artifacts, reversibility paths; regulator-friendly design
 
 ---
 
-## Docs Index
+## Docs Index 🔗
 
 - Whitepaper: `docs/WHITEPAPER-FTH-DIGITAL-FINANCE.md`
 - Executive Summary: `docs/EXECUTIVE-SUMMARY.md`
@@ -223,3 +225,88 @@ pnpm test
 ## License
 
 MIT
+
+---
+
+## System Overview (Flow Trees) 🌳
+
+```mermaid
+flowchart TD
+  A[System Entry Points] --> B1[XRPL RPC via xrpl-core-api]
+  A --> B2[Issuer/Treasury Ops via treasury-service]
+  A --> B3[Onboarding via compliance-service]
+  A --> B4[Membership via membership-service]
+  A --> B5[Reserves via bank-gateway-service]
+
+  B3 --> C1[Sanctions + KYC Provider]
+  C1 -->|Approved| D1[ComplianceRegistry.whitelist]
+  D1 --> E1[Membership NFT Issuance]
+
+  B5 --> C2[Pull Bank Balances]
+  C2 --> D2[ReserveRegistry.update]
+
+  B2 --> C3[MintGuard.canMint]
+  C3 -->|OK| D3[Treasury Node: Issue IOU]
+  D3 --> E3[MintGuard.confirmMint]
+
+  B1 --> C4[Core/Member Nodes: Ledger Operations]
+```
+
+---
+
+## Infrastructure Map & SLOs 🧱📊
+
+| Component | Role | SLO Targets | Notes |
+|---|---|---|---|
+| Core XRPL Node | Analytics/Routing | p95 latency < 2s; peers ≥ 5 | Read-optimized, internal VPC |
+| Treasury XRPL Node | Issuer/Mint Rail | p95 issue < 5s; allowlist-only | VPN + IP allowlist; HSM/MPC keys |
+| Member API XRPL Node | Client Reads | p95 latency < 2s; rate-limited | Public edge with WAF |
+| SystemGuard | Global Pause | RTO < 1m | 3-of-5 multi-sig |
+| MintGuard | Caps/CanMint | > 99.99% consistency | Blocks on pause or insufficient reserves |
+| ReserveRegistry | Reserve Source of Truth | Daily PoR; drift alerts | Fed by bank-gateway-service |
+| ComplianceRegistry | Whitelist/Risk | p95 < 2s | Backed by provider + cache |
+
+---
+
+## Operational Workflows (At-a-Glance) 🧭
+
+```mermaid
+sequenceDiagram
+  participant U as User
+  participant CS as compliance-service
+  participant CR as ComplianceRegistry
+  participant MS as membership-service
+  participant TS as treasury-service
+  participant MG as MintGuard
+  participant RN as XRPL Treasury Node
+
+  U->>CS: Submit KYC
+  CS->>CR: whitelist(user)
+  CS-->>U: Approved ✅
+  CS->>MS: Issue Membership NFT (tier)
+  U->>TS: Request Mint (amount)
+  TS->>MG: canMint(amount)
+  MG-->>TS: OK
+  TS->>RN: Issue IOU
+  TS->>MG: confirmMint(txHash)
+```
+
+---
+
+## Value Snapshots ✨
+
+- 🚀 Instant T+0 settlement across verticals
+- 🔒 Machine-verifiable guardrails (caps, pause, whitelist)
+- 🧭 Sovereign routing on owned XRPL nodes
+- 🧾 Daily PoR, monthly attestations, audit-friendly events
+- 🧩 Modular services + EVM control plane = fast iteration
+
+---
+
+## Quick Links 🔗
+
+- Whitepaper → `docs/WHITEPAPER-FTH-DIGITAL-FINANCE.md`
+- India Strategy → `docs/INDIA-STRATEGY-AND-COMPLIANCE.md`
+- CBDC Interop → `docs/CBDC-INTEROPERABILITY.md`
+- Global Rollout → `docs/GLOBAL-ROLL-OUT-PLAYBOOK.md`
+- FAQ → `docs/FAQ.md`
