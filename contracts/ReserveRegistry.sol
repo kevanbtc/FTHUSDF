@@ -32,8 +32,9 @@ contract ReserveRegistry is IReserveRegistry, AccessControl {
 
     /// @inheritdoc IReserveRegistry
     function updateReserve(string calldata assetId, uint256 newBalance) external override onlyRole(RESERVE_ADMIN_ROLE) {
-        require(_reserves[assetId] > 0 || bytes(assetId).length > 0, "ReserveRegistry: asset not found");
-        
+        // Require asset to already exist; prevents silent creation via update
+        require(_reserves[assetId] > 0, "ReserveRegistry: asset not found");
+
         _reserves[assetId] = newBalance;
         emit ReserveUpdated(assetId, newBalance);
     }

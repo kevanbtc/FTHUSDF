@@ -4,9 +4,10 @@
   "description": "FTH XRPL Backbone - FTHUSD/USDF Infrastructure",
   "private": true,
   "scripts": {
-    "test": "pnpm test:infra && pnpm test:contracts && pnpm test:compliance",
-    "test:infra": "mocha -r ts-node/register 'tests/infra/**/*.test.ts'",
-    "test:contracts": "hardhat test tests/contracts/**/*.spec.ts",
+  "test": "pnpm test:contracts && pnpm test:infra && pnpm test:compliance",
+  "test:infra": "mocha -r ts-node/register 'tests/infra/**/*.test.ts'",
+  "test:contracts": "hardhat test",
+  "test:fast": "hardhat test",
     "test:compliance": "mocha -r ts-node/register 'tests/compliance/**/*.test.ts'",
     "compile": "hardhat compile",
     "lint": "eslint . --ext .ts,.js",

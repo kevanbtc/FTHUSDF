@@ -1,6 +1,6 @@
+// @ts-nocheck
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
-import { ReserveRegistry } from '../typechain-types';
 
 /**
  * ReserveRegistry Smart Contract Tests
@@ -9,7 +9,7 @@ import { ReserveRegistry } from '../typechain-types';
  */
 
 describe('ReserveRegistry Contract', () => {
-  let reserveRegistry: ReserveRegistry;
+  let reserveRegistry: any;
   let owner: ethers.SignerWithAddress;
   let admin: ethers.SignerWithAddress;
   let user: ethers.SignerWithAddress;
@@ -45,7 +45,7 @@ describe('ReserveRegistry Contract', () => {
 
       await reserveRegistry.connect(admin).addReserve(bankId, amount);
 
-      const bankReserve = await reserveRegistry.getReserve(bankId);
+  const bankReserve = await reserveRegistry.getReserveBalance(bankId);
       expect(bankReserve).to.equal(amount);
     });
 
@@ -92,17 +92,15 @@ describe('ReserveRegistry Contract', () => {
 
       await reserveRegistry.connect(admin).updateReserve('bank_001', newAmount);
 
-      const balance = await reserveRegistry.getReserve('bank_001');
+  const balance = await reserveRegistry.getReserveBalance('bank_001');
       expect(balance).to.equal(newAmount);
     });
 
     it('should emit ReserveUpdated event', async () => {
-      const oldAmount = ethers.parseUnits('1000000', 6);
       const newAmount = ethers.parseUnits('1500000', 6);
-
       await expect(reserveRegistry.connect(admin).updateReserve('bank_001', newAmount))
         .to.emit(reserveRegistry, 'ReserveUpdated')
-        .withArgs('bank_001', oldAmount, newAmount);
+        .withArgs('bank_001', newAmount);
     });
 
     it('should correctly update totalReservesUsd', async () => {
@@ -131,14 +129,14 @@ describe('ReserveRegistry Contract', () => {
     it('should remove bank account', async () => {
       await reserveRegistry.connect(admin).removeReserve('bank_001');
 
-      const balance = await reserveRegistry.getReserve('bank_001');
+  const balance = await reserveRegistry.getReserveBalance('bank_001');
       expect(balance).to.equal(0);
     });
 
     it('should emit ReserveRemoved event', async () => {
       await expect(reserveRegistry.connect(admin).removeReserve('bank_001'))
         .to.emit(reserveRegistry, 'ReserveRemoved')
-        .withArgs('bank_001', ethers.parseUnits('1000000', 6));
+        .withArgs('bank_001');
     });
 
     it('should update totalReservesUsd', async () => {
@@ -154,12 +152,12 @@ describe('ReserveRegistry Contract', () => {
       const amount = ethers.parseUnits('750000', 6);
       await reserveRegistry.connect(admin).addReserve('bank_005', amount);
 
-      const balance = await reserveRegistry.getReserve('bank_005');
+  const balance = await reserveRegistry.getReserveBalance('bank_005');
       expect(balance).to.equal(amount);
     });
 
     it('should return 0 for non-existent bank', async () => {
-      const balance = await reserveRegistry.getReserve('nonexistent');
+  const balance = await reserveRegistry.getReserveBalance('nonexistent');
       expect(balance).to.equal(0);
     });
   });

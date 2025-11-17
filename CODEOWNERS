@@ -1,0 +1,4 @@
+# CODEOWNERS
+# Lines matching file patterns assign owners (GitHub usernames or teams)
+# Use @kevanbtc as the primary owner for all files; extend with teams as project grows
+*       @kevanbtc
