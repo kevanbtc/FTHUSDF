@@ -7,6 +7,42 @@
 
 ---
 
+## Table of Contents
+
+- [Executive Summary](#executive-summary)
+- [System Flow Diagrams](#system-flow-diagrams)
+- [1. Infrastructure Topology](#1-infrastructure-topology)
+   - [1.1 XRPL Node Fleet (AWS US-East-1)](#11-xrpl-node-fleet-aws-us-east-1)
+   - [1.2 Node Routing Logic](#12-node-routing-logic)
+- [2. Token Architecture](#2-token-architecture)
+   - [2.1 FTHUSD (Institutional Rail)](#21-fthusd-institutional-rail)
+   - [2.2 USDF (Client Rail)](#22-usdf-client-rail)
+   - [2.3 Membership NFTs](#23-membership-nfts)
+- [3. EVM Control Plane (Safety Layer)](#3-evm-control-plane-safety-layer)
+   - [3.1 Core Contracts](#31-core-contracts)
+   - [3.2 Safety Invariants](#32-safety-invariants)
+- [4. Service Layer (Node.js/TypeScript)](#4-service-layer-nodejstypescript)
+   - [4.1 xrpl-core-api](#41-xrpl-core-api-port-8080)
+   - [4.2 compliance-service](#42-compliance-service-port-8081)
+   - [4.3 membership-service](#43-membership-service-port-tbd)
+   - [4.4 treasury-service](#44-treasury-service-port-8082)
+   - [4.5 bank-gateway-service](#45-bank-gateway-service-port-tbd)
+- [5. Operational Flows](#5-operational-flows)
+   - [5.1 Customer Onboarding](#51-customer-onboarding)
+   - [5.2 Fiat In → FTHUSD Mint](#52-fiat-in--fthusd-mint)
+   - [5.3 FTHUSD → USDF Conversion](#53-fthusd--usdf-conversion)
+   - [5.4 Redemption: USDF/FTHUSD → USD](#54-redemption-usdffthusd--usd)
+   - [5.5 Emergency Pause](#55-emergency-pause)
+- [6. Compliance & Legal Framework](#6-compliance--legal-framework)
+   - [6.1 Regulatory Posture (US-Only v1)](#61-regulatory-posture-us-only-v1)
+   - [6.2 KYC/AML Policy](#62-kycaml-policy)
+   - [6.3 Proof-of-Reserves Policy](#63-proof-of-reserves-policy)
+   - [6.4 Required Contracts (Legal)](#64-required-contracts-legal)
+- [7. FTH Vertical Integration](#7-fth-vertical-integration)
+- [Appendix A: Diagrams Index](#appendix-a-diagrams-index)
+
+---
+
 ## Executive Summary
 
 This repository contains the complete **digital finance infrastructure** for FutureTech Holding Company (FTH), built on the XRP Ledger. It implements:
@@ -19,6 +55,142 @@ This repository contains the complete **digital finance infrastructure** for Fut
 - **Proof-of-Reserves**: Daily reconciliation + monthly attestation
 
 This is not a whitepaper or proof-of-concept. This is the **operational blueprint** for FTH's cross-vertical digital settlement infrastructure.
+
+---
+
+## System Flow Diagrams
+
+These senior-level diagrams capture the critical flows and guardrails. For a dedicated diagrams index, see [Appendix A](#appendix-a-diagrams-index).
+
+### High-Level Architecture
+
+```mermaid
+flowchart TB
+   subgraph XRPL[XRPL Network]
+      CORE[Core Node\n(analytics/routing)]
+      TREAS[Treasury Node\n(issuer rail)]
+      MEMAPI[Member API Node\n(client reads)]
+   end
+
+   subgraph Services[Service Layer]
+      XAPI[xrpl-core-api\n(routes & ledger ops)]
+      COMP[compliance-service\n(KYC/sanctions)]
+      MEMB[membership-service\n(NFT + registry)]
+      TREA[treasury-service\n(mint/burn orchestration)]
+      BANK[bank-gateway-service\n(reserve importer)]
+   end
+
+   subgraph EVM[Control Plane (EVM)]
+      SYS[SystemGuard\n(pause)]
+      MINT[MintGuard\n(caps & canMint)]
+      RSV[ReserveRegistry\n(bank balances)]
+      KYC[ComplianceRegistry\n(whitelist/risk)]
+   end
+
+   BANKS[(Bank Accounts)]
+
+   BANKS -- balances --> RSV
+   COMP -- writes/reads --> KYC
+   TREA -- checks --> MINT
+   TREA -- checks --> SYS
+   XAPI <---> CORE
+   XAPI <---> TREAS
+   XAPI <---> MEMAPI
+   TREA --> TREAS
+```
+
+### Onboarding / Compliance Flow
+
+```mermaid
+flowchart LR
+   A[Submit KYC] --> B[Provider Check]
+   B -->|Approved| C[ComplianceRegistry.whitelist]
+   C --> D[Membership NFT Issue]
+   D --> E[Wallet Eligible]
+   B -->|Denied| F[Manual Review]
+```
+
+### Mint Sequence (XRPL + EVM Guard)
+
+```mermaid
+sequenceDiagram
+   participant BG as Bank Gateway
+   participant RSV as ReserveRegistry
+   participant M as MintGuard
+   participant TS as Treasury Service
+   participant TN as XRPL Treasury Node
+   participant W as Wallet
+   BG->>RSV: updateReserve(bankId, amount)
+   TS->>M: canMint(amount)
+   M-->>TS: ok
+   TS->>TN: Issue IOU
+   TS->>M: confirmMint(amount, xrplTxHash)
+```
+
+### Reserves Update Pipeline
+
+```mermaid
+flowchart LR
+   CSV[(Bank CSV/API)] --> PARSE[bank-gateway-service\nparse/import]
+   PARSE --> AGG[Aggregate balances]
+   AGG --> CALL[ReserveRegistry.updateReserve()]
+   CALL --> RSV[ReserveRegistry]
+   RSV --> MINTCHK[MintGuard.canMint()]
+```
+
+### FTHUSD → USDF Conversion
+
+```mermaid
+flowchart LR
+   REQ[Member Request USDF] --> VAULT[Move FTHUSD to USDF_Vault]
+   VAULT --> ISSUE[Issue USDF]
+   ISSUE --> WAL[Member Wallet]
+   NOTE[Invariant: USDF_supply ≤ FTHUSD_in_vault] --> ISSUE
+```
+
+### Redemption to USD
+
+```mermaid
+flowchart LR
+   REDEEM[Member Redeem] --> BURNUSDF[Burn/Lock USDF]
+   BURNUSDF --> BURNF[Burn FTHUSD]
+   BURNF --> RECORD[MintGuard.recordBurn()]
+   RECORD --> PAYOUT[Bank Gateway Payout]
+```
+
+### Emergency Pause
+
+```mermaid
+flowchart LR
+   TRIG[Trigger: shortfall / sanctions / keys] --> PAUSE[SystemGuard.pause()]
+   PAUSE --> BLOCK[MintGuard.canMint() = false]
+   BLOCK --> HALT[All mints halt]
+```
+
+### Node Routing Logic
+
+```mermaid
+flowchart TD
+   OP[Operation] -->|mint/burn| T[Treasury Node]
+   OP -->|public_query| M[Member API Node]
+   OP -->|other| C[Core Node]
+```
+
+### CBDC Gateway (Two-Phase Commit)
+
+```mermaid
+flowchart TB
+   subgraph CBDC[CBDC Realm]
+      L[Lock/Hold]
+   end
+   subgraph XRPL[XRPL]
+      I[Issue IOU]
+      B[Burn/Reversal]
+   end
+   L --> I
+   I -->|confirm| L
+   I -->|failure| B
+```
 
 ---
 
@@ -416,6 +588,20 @@ While XRPL holds the money, EVM contracts enforce **when** and **how much** can 
 - **Benefit:** Verifiable on-ledger impact reporting
 
 ---
+
+## Appendix A: Diagrams Index
+
+- High-Level Architecture
+- Onboarding / Compliance Flow
+- Mint Sequence (XRPL + EVM Guard)
+- Reserves Update Pipeline
+- FTHUSD → USDF Conversion
+- Redemption to USD
+- Emergency Pause
+- Node Routing Logic
+- CBDC Gateway (Two-Phase Commit)
+
+For a consolidated diagrams page with embeddable artifacts, see `docs/DIAGRAMS/flow-trees.md`.
 
 ## 8. Security & Access Control
 
