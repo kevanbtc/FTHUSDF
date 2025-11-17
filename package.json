@@ -1,0 +1,43 @@
+{
+  "name": "fth-xrpl-backbone",
+  "version": "0.1.0",
+  "description": "FTH XRPL Backbone - FTHUSD/USDF Infrastructure",
+  "private": true,
+  "scripts": {
+    "test": "pnpm test:infra && pnpm test:contracts && pnpm test:compliance",
+    "test:infra": "mocha -r ts-node/register 'tests/infra/**/*.test.ts'",
+    "test:contracts": "hardhat test tests/contracts/**/*.spec.ts",
+    "test:compliance": "mocha -r ts-node/register 'tests/compliance/**/*.test.ts'",
+    "compile": "hardhat compile",
+    "lint": "eslint . --ext .ts,.js",
+    "format": "prettier --write '**/*.{ts,js,json,md,sol}'"
+  },
+  "workspaces": [
+    "services/*"
+  ],
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "@types/chai": "^4.3.11",
+    "@types/mocha": "^10.0.6",
+    "@types/node": "^20.10.6",
+    "@typescript-eslint/eslint-plugin": "^6.18.0",
+    "@typescript-eslint/parser": "^6.18.0",
+    "chai": "^4.3.10",
+    "eslint": "^8.56.0",
+    "hardhat": "^2.19.4",
+    "mocha": "^10.2.0",
+    "prettier": "^3.1.1",
+    "prettier-plugin-solidity": "^1.3.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.0.1",
+    "ethers": "^6.9.2",
+    "xrpl": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  }
+}

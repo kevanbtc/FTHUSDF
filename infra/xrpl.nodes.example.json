@@ -1,0 +1,37 @@
+{
+  "nodes": {
+    "core": {
+      "url": "wss://core.xrpl.futuretech.internal",
+      "role": "core",
+      "description": "Internal analytics and bot operations",
+      "priority": 1,
+      "healthCheckEndpoint": "https://core.xrpl.futuretech.internal/health"
+    },
+    "treasury": {
+      "url": "wss://treasury.xrpl.futuretech.internal",
+      "role": "treasury",
+      "description": "Issuer and treasury operations only",
+      "priority": 1,
+      "healthCheckEndpoint": "https://treasury.xrpl.futuretech.internal/health",
+      "restricted": true
+    },
+    "member_api": {
+      "url": "wss://api.xrpl.futuretech.com",
+      "role": "member_api",
+      "description": "External-facing member API",
+      "priority": 1,
+      "healthCheckEndpoint": "https://api.xrpl.futuretech.com/health",
+      "publicEndpoint": true
+    }
+  },
+  "routing": {
+    "default": "core",
+    "issuerOperations": "treasury",
+    "publicQueries": "member_api"
+  },
+  "healthCheck": {
+    "intervalSeconds": 60,
+    "maxLedgerLagSeconds": 5,
+    "minPeerCount": 7
+  }
+}

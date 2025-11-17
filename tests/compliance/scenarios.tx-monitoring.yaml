@@ -1,0 +1,123 @@
+# Transaction Monitoring Scenarios
+#
+# Test cases for AML transaction monitoring rules
+
+scenarios:
+  - name: "Structuring Detection - Multiple Small Deposits"
+    description: "Customer makes 5 deposits of $9,000 each within 24 hours (structuring)"
+    transactions:
+      - customerId: "cust_001"
+        type: "deposit"
+        amount: 9000
+        timestamp: "2024-01-01T10:00:00Z"
+      - customerId: "cust_001"
+        type: "deposit"
+        amount: 9000
+        timestamp: "2024-01-01T12:00:00Z"
+      - customerId: "cust_001"
+        type: "deposit"
+        amount: 9000
+        timestamp: "2024-01-01T14:00:00Z"
+      - customerId: "cust_001"
+        type: "deposit"
+        amount: 9000
+        timestamp: "2024-01-01T16:00:00Z"
+      - customerId: "cust_001"
+        type: "deposit"
+        amount: 9000
+        timestamp: "2024-01-01T18:00:00Z"
+    expectedAlerts:
+      - type: "structuring"
+        severity: "high"
+        reason: "Multiple deposits just below $10k threshold"
+        actionRequired: "SAR_filing"
+
+  - name: "Rapid Turnover - Same-Day Deposit and Withdrawal"
+    description: "Customer deposits $50k and withdraws $50k within 2 hours"
+    transactions:
+      - customerId: "cust_002"
+        type: "deposit"
+        amount: 50000
+        timestamp: "2024-01-02T09:00:00Z"
+      - customerId: "cust_002"
+        type: "withdrawal"
+        amount: 50000
+        timestamp: "2024-01-02T11:00:00Z"
+    expectedAlerts:
+      - type: "rapid_turnover"
+        severity: "medium"
+        reason: "Large same-day deposit/withdrawal (possible layering)"
+        actionRequired: "manual_review"
+
+  - name: "Unusual Activity - Dormant Account Reactivation"
+    description: "Customer with no activity for 6 months suddenly deposits $100k"
+    accountHistory:
+      customerId: "cust_003"
+      lastActivityDate: "2023-06-01"
+      typicalMonthlyVolume: 5000
+    transactions:
+      - customerId: "cust_003"
+        type: "deposit"
+        amount: 100000
+        timestamp: "2024-01-03T10:00:00Z"
+    expectedAlerts:
+      - type: "unusual_activity"
+        severity: "medium"
+        reason: "Dormant account reactivated with large deposit"
+        actionRequired: "enhanced_review"
+
+  - name: "Geographic Risk - High-Risk Jurisdiction"
+    description: "Customer sends funds to wallet associated with high-risk country"
+    transactions:
+      - customerId: "cust_004"
+        type: "transfer"
+        amount: 25000
+        destination: "rHighRiskWallet..."
+        destinationCountry: "IR"  # Iran (high-risk)
+        timestamp: "2024-01-04T15:00:00Z"
+    expectedAlerts:
+      - type: "geographic_risk"
+        severity: "high"
+        reason: "Transfer to high-risk jurisdiction (Iran)"
+        actionRequired: "immediate_review"
+
+  - name: "Large Transaction - Above Threshold"
+    description: "Single transaction exceeds $100k threshold"
+    transactions:
+      - customerId: "cust_005"
+        type: "deposit"
+        amount: 150000
+        timestamp: "2024-01-05T10:00:00Z"
+    expectedAlerts:
+      - type: "large_transaction"
+        severity: "low"
+        reason: "Transaction exceeds $100k threshold"
+        actionRequired: "CTR_filing"
+
+  - name: "Normal Activity - No Alerts"
+    description: "Customer makes typical deposit within historical patterns"
+    accountHistory:
+      customerId: "cust_006"
+      typicalMonthlyVolume: 20000
+      accountAge: "2 years"
+    transactions:
+      - customerId: "cust_006"
+        type: "deposit"
+        amount: 5000
+        timestamp: "2024-01-06T10:00:00Z"
+    expectedAlerts: []
+
+  - name: "Velocity Check - Excessive Daily Transactions"
+    description: "Customer makes 20 transactions in one day (unusual velocity)"
+    transactions:
+      - customerId: "cust_007"
+        type: "transfer"
+        amount: 1000
+        count: 20  # 20 transactions of $1000 each
+        timespan: "24 hours"
+        timestamp: "2024-01-07T00:00:00Z"
+    expectedAlerts:
+      - type: "excessive_velocity"
+        severity: "medium"
+        reason: "Unusually high transaction frequency"
+        actionRequired: "manual_review"

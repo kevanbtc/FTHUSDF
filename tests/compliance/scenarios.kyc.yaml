@@ -1,0 +1,135 @@
+# KYC Test Scenarios
+#
+# These scenarios validate the KYC workflow end-to-end
+# Use with compliance-service test runner
+
+scenarios:
+  - name: "Happy Path - Individual US Customer"
+    customer:
+      type: individual
+      country: US
+      firstName: "John"
+      lastName: "Doe"
+      dob: "1990-01-01"
+      ssn: "123-45-6789"
+      address:
+        street: "123 Main St"
+        city: "San Francisco"
+        state: "CA"
+        zip: "94102"
+      email: "john.doe@example.com"
+      phone: "+1-415-555-0100"
+    expectedOutcome:
+      status: approved
+      riskTier: LOW
+      membershipNFT: true
+
+  - name: "High-Risk Country - Russia"
+    customer:
+      type: individual
+      country: RU
+      firstName: "Ivan"
+      lastName: "Petrov"
+      dob: "1985-05-15"
+      passport: "1234567890"
+      address:
+        street: "Moscow Street 1"
+        city: "Moscow"
+        country: "RU"
+      email: "ivan@example.ru"
+      phone: "+7-123-456-7890"
+    expectedOutcome:
+      status: rejected
+      reason: "high_risk_jurisdiction"
+      riskTier: null
+      membershipNFT: false
+
+  - name: "OFAC Sanctions Hit"
+    customer:
+      type: individual
+      country: US
+      firstName: "John"
+      lastName: "Smith"
+      dob: "1980-01-01"
+      ssn: "999-99-9999"  # Fake SSN for testing
+      sanctionsMatch: true  # Simulated match
+      address:
+        street: "456 Elm St"
+        city: "New York"
+        state: "NY"
+        zip: "10001"
+      email: "john.smith@example.com"
+    expectedOutcome:
+      status: rejected
+      reason: "sanctions_hit"
+      riskTier: BLOCKED
+      membershipNFT: false
+
+  - name: "Corporate Customer - US LLC"
+    customer:
+      type: business
+      country: US
+      businessName: "Acme Corp LLC"
+      ein: "12-3456789"
+      incorporationState: "DE"
+      businessAddress:
+        street: "789 Business Blvd"
+        city: "Wilmington"
+        state: "DE"
+        zip: "19801"
+      beneficialOwners:
+        - firstName: "Jane"
+          lastName: "Smith"
+          ownershipPercent: 60
+          dob: "1975-03-20"
+          ssn: "111-22-3333"
+        - firstName: "Bob"
+          lastName: "Johnson"
+          ownershipPercent: 40
+          dob: "1980-07-10"
+          ssn: "444-55-6666"
+      email: "compliance@acmecorp.com"
+      phone: "+1-302-555-0200"
+    expectedOutcome:
+      status: approved
+      riskTier: MEDIUM
+      membershipNFT: true
+
+  - name: "Underage Customer"
+    customer:
+      type: individual
+      country: US
+      firstName: "Minor"
+      lastName: "Child"
+      dob: "2010-01-01"  # 14 years old
+      address:
+        street: "100 Young St"
+        city: "Austin"
+        state: "TX"
+        zip: "78701"
+      email: "minor@example.com"
+    expectedOutcome:
+      status: rejected
+      reason: "underage"
+      riskTier: null
+      membershipNFT: false
+
+  - name: "Incomplete KYC - Missing SSN"
+    customer:
+      type: individual
+      country: US
+      firstName: "Incomplete"
+      lastName: "User"
+      dob: "1990-01-01"
+      ssn: null  # Missing
+      address:
+        street: "200 Partial Ave"
+        city: "Seattle"
+        state: "WA"
+        zip: "98101"
+      email: "incomplete@example.com"
+    expectedOutcome:
+      status: pending
+      reason: "incomplete_information"
+      riskTier: null
+      membershipNFT: false
