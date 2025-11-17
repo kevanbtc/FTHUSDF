@@ -806,3 +806,4 @@ You've built the nervous system. The rest is just muscles and armor.
 - Global Roll‑Out Playbook: `GLOBAL-ROLL-OUT-PLAYBOOK.md`
 - FAQ: `FAQ.md`
 - One‑Pager: `ONE-PAGER.md`
+- HQ README (engineering + marketing): `README-HQ.md`
